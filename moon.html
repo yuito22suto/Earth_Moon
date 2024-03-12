@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1・0">
+        <title>Earth and Moon Animation</title>
+        <style>
+            canvas{
+                display: block;
+                margin: 0 auto;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="animation" width="900" height="900"></canvas>
+        <script>
+            class CelestialBody {
+                constructor (mass, position, velocity) {
+                    this.mass = mass;
+                    this.position = position;
+                    this.velocity = velocity;
+                }
+            }
+
+            const G = 6.67430e-11; // 万有引力定数（6.6743 × 10-11 m^3 kg^-1 s^s-2）
+
+            function calculateGravitationalForce (body1, body2) {
+                const distanceVector = {
+                    x: body2.position.x - body1.position.x,
+                    y: body2.position.y - body1.position.y
+                };
+                const distance = Math.sqrt(distanceVector.x ** 2 + distanceVector.y ** 2);
+                const forceMagnitude = G * body1.mass * body2.mass / distance ** 2;
+                const force = {
+                    x: forceMagnitude * distanceVector.x / distance,
+                    y: forceMagnitude * distanceVector.y / distance
+                }
+                return force;
+            }
+
+            function updatePositionAndVelocity(body, force, deltaTime) {
+                const acceleration = {
+                    x: force.x / body.mass,
+                    y: force.y / body.mass
+                };
+                body.velocity.x += acceleration.x * deltaTime;
+                body.velocity.y += acceleration.y * deltaTime;
+                body.position.x += body.velocity.x * deltaTime;
+                body.position.y += body.velocity.y * deltaTime;
+            }
+
+            // 地球と月を作成
+            const earth = new CelestialBody(
+                5.972e24, // mass (kg)
+                { x: 0, y: 0 }, // position (m)
+                { x: 0, y: 0 }  // velocity (m/s)
+            );
+
+            const moon = new CelestialBody(
+                7.342e22, // mass (kg)
+                { x: 384400000, y: 0 }, // position (m)
+                { x: 0, y: 1022 }  // velocity (m/s)
+            )
+
+            const deltaTime = 1000; // 1秒ごとにシミュレーションを更新
+
+            setInterval (() => {
+                const earthMoonForce = calculateGravitationalForce(earth, moon);
+                updatePositionAndVelocity(earth, earthMoonForce, deltaTime);
+                updatePositionAndVelocity(moon, { x: -earthMoonForce.x, y:-earthMoonForce.y }, deltaTime)
+
+                console.log(`Moon position: (${moon.position.x.toFixed(2)}, ${moon.position.y.toFixed(2)})`);
+            }, deltaTime)
+
+            const canvas = document.getElementById('animation');
+            const ctx = canvas.getContext('2d');
+            const scale = 1000000; // 1ピクセルあたりの距離 (m)
+
+            function draw(){
+                // 画面をクリア
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 地球を描画
+                ctx.beginPath();
+                ctx.arc(earth.position.x / scale + canvas.width / 2, earth.position.y / scale + canvas.height / 2, 6371 / scale, 0, 2 * Math.PI);
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+
+                // 月を描画
+                ctx.beginPath();
+                ctx.arc(moon.position.x / scale + canvas.width / 2, moon.position.y / scale + canvas.height / 2, 1737 / scale, 0, 2 * Math.PI);
+                ctx.fillStyle = 'gray';
+                ctx.fill();
+
+                // 次のフレームを要求
+                requestAnimationFrame(draw);
+            }
+
+            setInterval (() => {
+                const earthMoonForce = calculateGravitationalForce(earth, moon);
+                updatePositionAndVelocity(earth, earthMoonForce, deltaTime);
+                updatePositionAndVelocity(moon, { x: -earthMoonForce.x, y:-earthMoonForce.y }, deltaTime);
+            }, deltaTime);
+
+            draw();
+        </script>
+    </body>
+</html>
